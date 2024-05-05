@@ -1,0 +1,171 @@
+---
+title: "JHS manuscript proposal content"
+bibliography: refs.bib
+csl: jama.csl
+always_allow_html: true
+output: 
+  officedown::rdocx_document:
+    reference_docx: style_manuscript_times_new_roman.docx
+    keep_md: true
+---
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE, 
+                      message = FALSE,
+                      warning = FALSE,
+                      dpi = 600, 
+                      fig.width = 11, 
+                      fig.height = 6)
+
+# load standard packages for RMD word docs
+library(officer)
+library(flextable)
+library(gtsummary)
+library(dplyr)
+library(purrr)
+library(tidyr)
+
+# specify a rounding specification 
+library(table.glue)
+
+conflicted::conflict_prefer('as_flextable', winner = 'flextable')
+conflicted::conflict_prefer('filter', winner = 'dplyr')
+
+
+rspec <- round_spec() |>
+  round_using_magnitude(digits = c(2, 1, 0),
+                        breaks = c(1, 10, Inf))
+
+# save it to options:
+names(rspec) <- paste('table.glue', names(rspec), sep = '.')
+options(rspec)
+
+# default is double space 
+# single spacing for title page, abstract, captions
+single_par <- fp_par(line_spacing=1)
+
+
+```
+
+
+<br>
+<br>
+<br>
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+
+<!-- **Correspondence to:** \ -->
+<!-- Your name, Degree \ -->
+<!-- Your Department \ -->
+<!-- Additional departmental details if needed \ -->
+<!-- Your university \ -->
+<!-- Address line 1 \ -->
+<!-- Address line 2 \ -->
+<!-- Address line 3 \ -->
+<!-- your phone number \ -->
+<!-- your email `r single_par` -->
+
+<!-- **Word Count:** Abstract: ; Manuscript:  -->
+
+```{r data-prep, include=FALSE}
+
+withr::with_dir(
+  here::here(),
+  code = {
+    targets::tar_load(c(jhs_excluded, 
+                        tbl_sample))
+  }
+)
+
+tbl_exclusions <- jhs_excluded$counts
+
+
+```
+
+## Context
+
+Guidelines recommend using blood pressure (BP) and cardiovascular disease (CVD) risk to guide the decision to initiate antihypertensive medication.  In the 2017 ACC/AHA BP guideline, adults with stage 1 hypertension and 10-year atherosclerotic CVD risk ≥ 10% were recommended to initiate antihypertensive medication.  The AHA recently introduced equations for estimating 30-year risk of total CVD for adults 30 to 60 years of age. A high percentage of adults 30 to <60 years of age without hypertension have low (<10%) 10-year total CVD risk and high (≥30%) 30-year total CVD risk. It is unclear whether adults without hypertension with low 10-year predicted total CVD risk but high 30-year predicted total CVD risk should initiate antihypertensive medication.  We hypothesize that the incidence of hypertension will be higher among black adults with high 30-year predicted total CVD risk and that there will be evidence of sub-clinical CVD among adults with high 30-year predicted total CVD risk when they develop hypertension. This may support the decision to initiate antihypertensive medication among adults with high 30-year predicted total CVD risk before they develop hypertension.
+
+## Aims 
+
+1. Describe the distribution of adults without hypertension according to 10-year and 30-year total cardiovascular disease risk.
+
+    a. Sub-aim: Describe the distribution of these groups by blood pressure categories.
+
+2. Estimate the association between total CVD risk and incident hypertension. 
+
+3. Estimate the association between total CVD risk and incident cardiovascular disease.
+
+    a. Estimate the incidence of CVD between visit 1 and visit 3. 
+    
+    b. Among participants who did not develop CVD between visit 1 and visit 3, estimate the incidence of sub-clinical CVD based on left-ventricular hypertrophy (LVH)
+    
+    c. Compare left-ventricular mass index (LVMI) and LVH among people who developed and did not develop hypertension.
+
+## Questions and options 
+
+Do we need to consider LVMI and LVH at Visit 1? Should we just focus on this at a follow-up assessment?
+
+We have the option of including additional cohorts: 
+
+1.	Use JHS only (JHS has Echo @ V1 and MRI @ V3)
+2.	Use JHS + REGARDS (JHS has ECG @ V1 and V3, REGARDS has ECG @ V1 and V2)
+3.	Use JHS + CARDIA (CARDIA has Echo @ Y25 and Y30)
+
+Why not all three cohorts? We may not have enough time to prepare all three, but it’s worth discussing.
+
+
+\newpage
+
+Table 1: Jackson Heart Study participants included in the current analysis.
+
+```{r tbl_exclusions}
+
+tbl_exclusions %>% 
+  select(label, n) %>% 
+  flextable() %>% 
+  theme_box() %>% 
+  width(j = 1, width = 4) %>% 
+  width(j = 2, width = 1.5) %>% 
+  set_header_labels(label = "Inclusion criteria",
+                    n = "No. of participants") %>% 
+  font(fontname = "Times New Roman", part = 'all') %>% 
+  fontsize(size = 12, part = 'all')
+
+```
+
+\newpage
+
+Table 2: Number of Jackson Heart Study participants in groups defined by blood pressure and total cardiovascular disease risk.
+
+```{r}
+
+
+tbl_sample %>% 
+  mutate(n = table_value(as.integer(n))) %>% 
+  pivot_wider(names_from = type, values_from = n) %>% 
+  as_grouped_data(groups = 'count_type') %>% 
+  as_flextable(hide_grouplabel = TRUE) %>% 
+  theme_box() %>% 
+  set_header_labels(
+    cvd_cat = "PREVENT CVD risk equation"
+  ) %>% 
+  padding(padding.left = 15, 
+          part = 'body',
+          j = 1, 
+          i = ~ is.na(count_type)) %>% 
+  width(width = 1.25) %>% 
+  width(j = 1, width = 2) %>% 
+  merge_v(part = 'header') %>% 
+  align(align = 'center', part = 'all') %>% 
+  align(j = 1, align = 'left', part = 'all') %>% 
+  font(fontname = "Times New Roman", part = 'all') %>% 
+  fontsize(size = 12, part = 'all')
+
+```
+
+

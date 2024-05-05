@@ -1,0 +1,137 @@
+---
+title: "Title TBD"
+bibliography: refs.bib
+csl: jama.csl
+always_allow_html: true
+output: 
+  officedown::rdocx_document:
+    reference_docx: style_manuscript_times_new_roman.docx
+    keep_md: true
+---
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE, 
+                      message = FALSE,
+                      warning = FALSE,
+                      dpi = 600, 
+                      fig.width = 11, 
+                      fig.height = 6)
+
+# load standard packages for RMD word docs
+library(officer)
+library(flextable)
+library(gtsummary)
+library(dplyr)
+library(purrr)
+
+# specify a rounding specification 
+library(table.glue)
+
+conflicted::conflict_prefer('as_flextable', winner = 'flextable')
+conflicted::conflict_prefer('filter', winner = 'dplyr')
+
+
+rspec <- round_spec() |>
+  round_using_magnitude(digits = c(2, 1, 0),
+                        breaks = c(1, 10, Inf))
+
+# save it to options:
+names(rspec) <- paste('table.glue', names(rspec), sep = '.')
+options(rspec)
+
+# default is double space 
+# single spacing for title page, abstract, captions
+single_par <- fp_par(line_spacing=1)
+
+
+```
+
+Byron C Jaeger, PhD^1^ 
+
+^1^Biostatistics and Data Science, Wake Forest University School of Medicine, Winston-Salem, NC. `r single_par`
+
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+<!-- <br> -->
+
+<!-- **Correspondence to:** \ -->
+<!-- Your name, Degree \ -->
+<!-- Your Department \ -->
+<!-- Additional departmental details if needed \ -->
+<!-- Your university \ -->
+<!-- Address line 1 \ -->
+<!-- Address line 2 \ -->
+<!-- Address line 3 \ -->
+<!-- your phone number \ -->
+<!-- your email `r single_par` -->
+
+<!-- **Word Count:** Abstract: ; Manuscript:  -->
+
+```{r data-prep, include=FALSE}
+
+withr::with_dir(
+  here::here(),
+  code = {
+    targets::tar_load(c(jhs_excluded, 
+                        tbl_sample))
+  }
+)
+
+tbl_exclusions <- jhs_excluded$counts
+
+
+```
+
+\newpage
+
+Table: Exclusions
+
+```{r tbl_exclusions}
+
+tbl_exclusions %>% 
+  select(label, n) %>% 
+  flextable() %>% 
+  theme_box() %>% 
+  width(j = 1, width = 4) %>% 
+  width(j = 2, width = 1.5) %>% 
+  set_header_labels(label = "Inclusion criteria",
+                    n = "No. of participants")
+
+```
+
+\newpage
+
+Table: Distribution of predicted risk for CVD at visit 1.
+
+```{r}
+
+
+tbl_sample %>% 
+  mutate(n = table_value(as.integer(n))) %>% 
+  pivot_wider(names_from = type, values_from = n) %>% 
+  as_grouped_data(groups = 'count_type') %>% 
+  as_flextable(hide_grouplabel = TRUE) %>% 
+  theme_box() %>% 
+  set_header_labels(
+    cvd_cat = "PREVENT CVD risk equation"
+  ) %>% 
+  padding(padding.left = 15, 
+          part = 'body',
+          j = 1, 
+          i = ~ is.na(count_type)) %>% 
+  width(j = 1, width = 3.2) %>% 
+  width(j = c(2,3), width = 1) %>% 
+  merge_v(part = 'header') %>% 
+  align(align = 'center', part = 'all') %>% 
+  align(j = 1, align = 'left', part = 'all')
+
+```
+
+
