@@ -11,7 +11,7 @@ jhs_clean <- function(jhs_derived) {
     relocate(matches("^time|^status"), .before = age) %>%
     mutate(across(where(is.logical), ~factor(.x,
                                              levels = c(FALSE, TRUE),
-                                             labels = c("no", "yes")))) %>%
+                                             labels = c("No", "Yes")))) %>%
     mutate(across(where(is.character), as.factor))
 
 }

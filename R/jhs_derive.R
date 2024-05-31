@@ -14,6 +14,32 @@ jhs_derive <- function(jhs_excluded) {
 
   jhs_excluded$data %>%
     mutate(
+
+      lvmi_bsa = lvmass_v3 / bsa_v3,
+      lvmi_height = lvmass_v3 / (height_m ^ 2.7),
+
+      lvh_bsa = if_else(sex == "Male",
+                        lvmi_bsa > 106.2,
+                        lvmi_bsa > 84.6),
+
+      lvh_height = if_else(sex == "Male",
+                           lvmi_height > 45.1,
+                           lvmi_height > 38),
+
+      time_htn_left = if_else(htn_v2 == 'Yes' | is.na(htn_v2),
+                              true = 0,
+                              false = time_v2),
+
+
+      time_htn_right = case_when(htn_v2 == "Yes" ~ time_v2,
+                                 htn_v3 == "Yes" ~ time_v3,
+                                 TRUE ~ Inf),
+
+      status_htn = case_when(
+        htn_v2 == "Yes" | htn_v3 == "Yes" ~ 1,
+        TRUE ~ 0
+      ),
+
       ascvd_pce = predict_10yr_ascvd_risk(
         age_years = age,
         race = rep("black", n()),

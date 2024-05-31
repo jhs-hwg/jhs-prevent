@@ -18,5 +18,18 @@ library(PooledCohort)
 library(magrittr)
 library(survival)
 library(broom)
+library(icenReg)
+library(geepack)
+
+library(miceRanger)
+library(mice)
+
+library(officer)
+library(flextable)
+library(gtsummary)
+library(dplyr)
+library(purrr)
+library(table.glue)
+
 
 source("conflicts.R")

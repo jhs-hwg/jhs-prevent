@@ -12,47 +12,76 @@ library(future.callr)
 plan(callr)
 
 
-
 proposal_version <- 2
 
 if(!dir.exists(glue("doc/proposal-v{proposal_version}"))){
   dir.create(glue("doc/proposal-v{proposal_version}"))
 }
 
+manuscript_version <- 1
 
-labels_tar <- tar_target(
-  labels,
-  list(variable_name = "variable label")
-)
+if(!dir.exists(glue("doc/manuscript-v{manuscript_version}"))){
+  dir.create(glue("doc/manuscript-v{manuscript_version}"))
+}
 
-jhs_init_tar <- tar_target(jhs_init, jhs_load())
+
+labels_tar <- tar_target(labels, make_labels())
+
+# data management ---------------------------------------------------------
+
+jhs_init_tar    <- tar_target(jhs_init,     jhs_load())
 jhs_exclude_tar <- tar_target(jhs_excluded, jhs_exclude(jhs_init))
-jhs_derive_tar <- tar_target(jhs_derived, jhs_derive(jhs_excluded))
-jhs_clean_tar <- tar_target(jhs_cleaned, jhs_clean(jhs_derived))
-
-
-# library(miceRanger)
-#
-# imps <- miceRanger(data = jhs_cleaned,
-#                    vars = setdiff(names(jhs_cleaned), 'subjid'))
-#
-# completeData(imps) %>%
-#   map(~ lm(lvmi_height ~ cvd_prevent_30,
-#            data = .x,
-#            subset = htn_v3 == "Yes")) %>%
-#   map(anova)
-
-# fit <- lm(lvmi_height ~ cvd_prevent_30,
-#           data = jhs_cleaned,
-#           subset = htn_v3 == "Yes")
-#
-# fit <- glm(lvh_height ~ cvd_prevent_30,
-#           data = jhs_cleaned,
-#           family = 'binomial',
-#           subset = htn_v3 == "Yes")
-# tidy(fit)
+jhs_derive_tar  <- tar_target(jhs_derived,  jhs_derive(jhs_excluded))
+jhs_clean_tar   <- tar_target(jhs_cleaned,  jhs_clean(jhs_derived))
+jhs_imputed_tar <- tar_target(jhs_imputed,  jhs_impute(jhs_cleaned))
 
 tbl_sample_tar <- tar_target(tbl_sample, jhs_count(jhs_cleaned))
+
+tbl_chars_tar <- tar_target(tbl_chars, tabulate_chars(jhs_cleaned, labels))
+
+outcomes_lvh_tar <- tar_target(outcomes_lvh, c("lvh_height", "lvh_bsa"))
+outcomes_lvm_tar <- tar_target(outcomes_lvm, c("lvmi_height", "lvmi_bsa"))
+
+analysis_ctns_tar <- tar_map(
+  values = tibble(subset = c('overall', 'norm', 'elevated', 'stage_1')),
+  tar_target(analysis_set, jhs_subset(jhs_imputed, subset = subset)),
+  tar_target(tbl_prevent_dist, tabulate_prevent_dist(analysis_set)),
+  tar_target(fit_htn, icen_fit(analysis_set)),
+  tar_target(fit_lvm,
+             pattern = map(outcomes_lvm),
+             lm_fit(analysis_set, .outcome = outcomes_lvm)),
+  tar_target(fit_lvh,
+             pattern = map(outcomes_lvh),
+             gee_fit(analysis_set, .outcome = outcomes_lvh))
+)
+
+tbl_prevent_dist_cmbn_tar <- tar_combine(
+  tbl_prevent_dist_cmbn,
+  analysis_ctns_tar$tbl_prevent_dist,
+  command = bind_rows(!!!.x, .id = 'group') %>%
+    mutate(group = str_remove(group, "^tbl_prevent_dist_"))
+)
+
+fit_htn_cmbn_tar <- tar_combine(
+  fit_htn_cmbn,
+  analysis_ctns_tar$fit_htn,
+  command = bind_rows(!!!.x, .id = 'group') %>%
+    mutate(group = str_remove(group, "^fit_htn_"))
+)
+
+fit_lvm_cmbn_tar <- tar_combine(
+  fit_lvm_cmbn,
+  analysis_ctns_tar$fit_lvm,
+  command = bind_rows(!!!.x, .id = 'group') %>%
+    mutate(group = str_remove(group, "^fit_lvm_"))
+)
+
+fit_lvh_cmbn_tar <- tar_combine(
+  fit_lvh_cmbn,
+  analysis_ctns_tar$fit_lvh,
+  command = bind_rows(!!!.x, .id = 'group') %>%
+    mutate(group = str_remove(group, "^fit_lvh_"))
+)
 
 proposal_tar <- tar_render(
   proposal,
@@ -63,15 +92,34 @@ proposal_tar <- tar_render(
                        ".docx")
 )
 
+manuscript_tar <- tar_render(
+  manuscript,
+  path = here("doc/manuscript.Rmd"),
+  output_file = paste0("manuscript", "-v", manuscript_version, "/",
+                       "manuscript-", "jhs-prevent",
+                       "-v", manuscript_version,
+                       ".docx")
+)
+
 
 targets <- list(
   jhs_init_tar,
   jhs_exclude_tar,
   jhs_derive_tar,
   jhs_clean_tar,
+  jhs_imputed_tar,
   labels_tar,
   tbl_sample_tar,
-  proposal_tar
+  tbl_chars_tar,
+  outcomes_lvh_tar,
+  outcomes_lvm_tar,
+  analysis_ctns_tar,
+  tbl_prevent_dist_cmbn_tar,
+  fit_htn_cmbn_tar,
+  fit_lvm_cmbn_tar,
+  fit_lvh_cmbn_tar,
+  proposal_tar,
+  manuscript_tar
 )
 
 tar_hook_before(

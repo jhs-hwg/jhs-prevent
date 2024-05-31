@@ -17,20 +17,6 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.width = 11, 
                       fig.height = 6)
 
-# load standard packages for RMD word docs
-library(officer)
-library(flextable)
-library(gtsummary)
-library(dplyr)
-library(purrr)
-
-# specify a rounding specification 
-library(table.glue)
-
-conflicted::conflict_prefer('as_flextable', winner = 'flextable')
-conflicted::conflict_prefer('filter', winner = 'dplyr')
-
-
 rspec <- round_spec() |>
   round_using_magnitude(digits = c(2, 1, 0),
                         breaks = c(1, 10, Inf))
@@ -43,6 +29,30 @@ options(rspec)
 # single spacing for title page, abstract, captions
 single_par <- fp_par(line_spacing=1)
 
+abbrvs_paste <- function(strings){
+
+  front <- 'Abbreviations'
+
+  matter <- glue::glue_collapse(strings,
+                                sep = '; ',
+                                last = '; and ')
+
+  paste(front, matter, sep = ': ')
+
+}
+
+abbrvs_write <- function(abbr){
+
+  sorted <- abbr[sort(names(abbr))]
+
+  strings <- map2_chr(names(sorted),
+                      sorted,
+                      paste, sep = ' = ')
+
+  as_paragraph(abbrvs_paste(strings))
+
+}
+
 
 ```
 
@@ -50,37 +60,16 @@ Byron C Jaeger, PhD^1^
 
 ^1^Biostatistics and Data Science, Wake Forest University School of Medicine, Winston-Salem, NC. `r single_par`
 
-<!-- <br> -->
-<!-- <br> -->
-<!-- <br> -->
-<!-- <br> -->
-<!-- <br> -->
-<!-- <br> -->
-<!-- <br> -->
-<!-- <br> -->
-<!-- <br> -->
-<!-- <br> -->
-
-<!-- **Correspondence to:** \ -->
-<!-- Your name, Degree \ -->
-<!-- Your Department \ -->
-<!-- Additional departmental details if needed \ -->
-<!-- Your university \ -->
-<!-- Address line 1 \ -->
-<!-- Address line 2 \ -->
-<!-- Address line 3 \ -->
-<!-- your phone number \ -->
-<!-- your email `r single_par` -->
-
-<!-- **Word Count:** Abstract: ; Manuscript:  -->
 
 ```{r data-prep, include=FALSE}
 
 withr::with_dir(
   here::here(),
   code = {
-    targets::tar_load(c(jhs_excluded, 
-                        tbl_sample))
+    targets::tar_load(c(labels,
+                        jhs_excluded, 
+                        tbl_chars,
+                        tbl_prevent_dist_cmbn))
   }
 )
 
@@ -91,7 +80,86 @@ tbl_exclusions <- jhs_excluded$counts
 
 \newpage
 
-Table: Exclusions
+
+Table 1: Participant characteristics.
+
+```{r}
+
+tbl_chars %>% 
+  footnote(
+    i = 1, j = 1, 
+    part = 'header',
+    value = as_paragraph(
+      "Table values are mean (standard deviation) or percent"
+    ),
+    ref_symbols = "1"
+  ) %>% 
+  add_footer_lines(
+    value = abbrvs_write(labels$abbreviations[c("PREVENT", "CVD")])
+  )
+
+```
+
+\newpage
+
+Table 2: Distribution of PREVENT 10- and 30-year predicted risk for cardiovascular disease.
+
+```{r}
+
+tbl_dist_data <- tbl_prevent_dist_cmbn %>% 
+  mutate(tbl_p = table_glue("{n} ({p*100})"),
+         tbl_lv = table_glue("{lvmi_height} ({lvh_height * 100})"),
+         tbl_htn = table_value(htn * 100)) %>% 
+  select(group, matches("^cvd|^tbl")) %>% 
+  pivot_longer(cols = starts_with("tbl")) %>% 
+  split(.$name) %>% 
+  map_dfr(
+    ~ .x %>% 
+      pivot_wider(names_from = group, 
+                  values_from = value) %>% 
+      select(-name),
+    .id = 'stat'
+  ) %>% 
+  mutate(
+    stat = factor(
+      stat, 
+      levels = c('tbl_p',
+                 'tbl_htn', 
+                 'tbl_lv'),
+      labels = c("N (%) of participants",
+                 "% with hypertension at visit 2 or visit 3",
+                 "LV mass mean (% with LV hypertrophy)  at visit 3")
+    )
+  ) %>% 
+  arrange(stat)
+
+tbl_dist_data %>%
+  as_grouped_data(groups = 'stat') %>% 
+  as_flextable(hide_grouplabel = TRUE) %>% 
+  theme_box() %>% 
+  bg(i =~ !is.na(stat), bg = 'grey90') %>% 
+  add_header_row(values = c("PREVENT CVD risk", 
+                            "Blood pressure category"),
+                 colwidths = c(2, 4)) %>% 
+  merge_v(j = ~cvd_prevent_bnry_10, part = 'body') %>% 
+  align(align = 'center', part = 'all') %>% 
+  align(j = 1, align = 'left', part = 'all') %>%
+  set_header_labels(
+    cvd_prevent_bnry_10 = "10-year",
+    cvd_prevent_cat_30 = "30-year",
+    overall = "Overall",
+    norm = labels$levels$bp_cat['norm'],
+    elevated = labels$levels$bp_cat['elevated'],
+    stage_1 = labels$levels$bp_cat['stage_1']
+  ) %>% 
+  width(width = 1.2)
+
+```
+
+
+\newpage
+
+Table S1: Exclusions
 
 ```{r tbl_exclusions}
 
@@ -105,33 +173,3 @@ tbl_exclusions %>%
                     n = "No. of participants")
 
 ```
-
-\newpage
-
-Table: Distribution of predicted risk for CVD at visit 1.
-
-```{r}
-
-
-tbl_sample %>% 
-  mutate(n = table_value(as.integer(n))) %>% 
-  pivot_wider(names_from = type, values_from = n) %>% 
-  as_grouped_data(groups = 'count_type') %>% 
-  as_flextable(hide_grouplabel = TRUE) %>% 
-  theme_box() %>% 
-  set_header_labels(
-    cvd_cat = "PREVENT CVD risk equation"
-  ) %>% 
-  padding(padding.left = 15, 
-          part = 'body',
-          j = 1, 
-          i = ~ is.na(count_type)) %>% 
-  width(j = 1, width = 3.2) %>% 
-  width(j = c(2,3), width = 1) %>% 
-  merge_v(part = 'header') %>% 
-  align(align = 'center', part = 'all') %>% 
-  align(j = 1, align = 'left', part = 'all')
-
-```
-
-

@@ -8,6 +8,7 @@ output:
     reference_docx: style_manuscript_times_new_roman.docx
     keep_md: true
 ---
+
 ```{r setup, include=FALSE}
 
 knitr::opts_chunk$set(echo = FALSE, 
