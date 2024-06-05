@@ -18,7 +18,7 @@ if(!dir.exists(glue("doc/proposal-v{proposal_version}"))){
   dir.create(glue("doc/proposal-v{proposal_version}"))
 }
 
-manuscript_version <- 1
+manuscript_version <- 2
 
 if(!dir.exists(glue("doc/manuscript-v{manuscript_version}"))){
   dir.create(glue("doc/manuscript-v{manuscript_version}"))
@@ -69,6 +69,11 @@ fit_htn_cmbn_tar <- tar_combine(
     mutate(group = str_remove(group, "^fit_htn_"))
 )
 
+tbl_fit_htn_tar <- tar_target(
+  tbl_fit_htn,
+  tabulate_fit_htn(fit_htn_cmbn, labels = labels)
+)
+
 fit_lvm_cmbn_tar <- tar_combine(
   fit_lvm_cmbn,
   analysis_ctns_tar$fit_lvm,
@@ -76,11 +81,21 @@ fit_lvm_cmbn_tar <- tar_combine(
     mutate(group = str_remove(group, "^fit_lvm_"))
 )
 
+tbl_fit_lvm_tar <- tar_target(
+  tbl_fit_lvm,
+  tabulate_fit_lvm(fit_lvm_cmbn, labels = labels)
+)
+
 fit_lvh_cmbn_tar <- tar_combine(
   fit_lvh_cmbn,
   analysis_ctns_tar$fit_lvh,
   command = bind_rows(!!!.x, .id = 'group') %>%
     mutate(group = str_remove(group, "^fit_lvh_"))
+)
+
+tbl_fit_lvh_tar <- tar_target(
+  tbl_fit_lvh,
+  tabulate_fit_lvh(fit_lvh_cmbn, labels = labels)
 )
 
 proposal_tar <- tar_render(
@@ -116,8 +131,11 @@ targets <- list(
   analysis_ctns_tar,
   tbl_prevent_dist_cmbn_tar,
   fit_htn_cmbn_tar,
+  tbl_fit_htn_tar,
   fit_lvm_cmbn_tar,
+  tbl_fit_lvm_tar,
   fit_lvh_cmbn_tar,
+  tbl_fit_lvh_tar,
   proposal_tar,
   manuscript_tar
 )

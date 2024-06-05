@@ -177,23 +177,37 @@ jhs_derive <- function(jhs_excluded) {
                                          "stage_1",
                                          "hypertension")),
 
+      # cvd_prevent_cat_30 = case_when(
+      #   cvd_prevent_30 < 0.10 ~ "<10%",
+      #   cvd_prevent_30 < 0.15 ~ "10% to <15%",
+      #   cvd_prevent_30 < 0.20 ~ "15% to <20%",
+      #   cvd_prevent_30 < 0.25 ~ "20% to <25%",
+      #   cvd_prevent_30 < 0.30 ~ "25% to <30%",
+      #   cvd_prevent_30 >= .30 ~ "\u226530%",
+      #   TRUE ~ NA_character_
+      # ),
+      #
+      # cvd_prevent_cat_30 = factor(cvd_prevent_cat_30,
+      #                             levels = c("<10%",
+      #                                        "10% to <15%",
+      #                                        "15% to <20%",
+      #                                        "20% to <25%",
+      #                                        "25% to <30%",
+      #                                        "\u226530%")),
+
       cvd_prevent_cat_30 = case_when(
         cvd_prevent_30 < 0.10 ~ "<10%",
-        cvd_prevent_30 < 0.15 ~ "10% to <15%",
-        cvd_prevent_30 < 0.20 ~ "15% to <20%",
-        cvd_prevent_30 < 0.25 ~ "20% to <25%",
-        cvd_prevent_30 < 0.30 ~ "25% to <30%",
+        cvd_prevent_30 < 0.20 ~ "10% to <20%",
+        cvd_prevent_30 < 0.30 ~ "20% to <30%",
         cvd_prevent_30 >= .30 ~ "\u226530%",
         TRUE ~ NA_character_
       ),
-
       cvd_prevent_cat_30 = factor(cvd_prevent_cat_30,
                                   levels = c("<10%",
-                                             "10% to <15%",
-                                             "15% to <20%",
-                                             "20% to <25%",
-                                             "25% to <30%",
+                                             "10% to <20%",
+                                             "20% to <30%",
                                              "\u226530%")),
+
 
       cvd_group = case_when(
         cvd_prevent_10 >= 0.10 ~ "high_10",

@@ -56,6 +56,7 @@ make_labels <- function(...) {
   levels <- list(
     sex = c("Male" = "Men", "Female" = "Women"),
     bp_cat = c(
+      overall  = "Overall",
       norm     = "Normal blood pressure",
       elevated = "Elevated blood pressure",
       stage_1  = "Stage 1 hypertension"
@@ -69,6 +70,7 @@ make_labels <- function(...) {
     EHR  = 'electronic health records',
     CVD  = 'cardiovascular disease',
     CKD  = 'chronic kidney disease',
+    LV   = 'left ventricular',
     LVM  = 'left ventricular mass',
     LVH  = 'left ventricular hypertrophy',
     PREVENT = "predicting risk of cardiovascular disease events"
