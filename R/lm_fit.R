@@ -14,16 +14,20 @@
 # scale_by <- 10
 
 
-lm_fit <- function(analysis_set, .outcome, scale_by = 10) {
+lm_fit <- function(analysis_set,
+                   .outcome,
+                   scale_by = 10,
+                   htn = TRUE) {
 
   .analysis_set <- analysis_set %>%
     map(
       ~ {
         .x$outcome <- .x[[.outcome]]
         filter(.x,
-               !(time_chd < time_v2 & status_chd == 1),
-               !(time_stroke < time_v2 & status_stroke == 1),
-               cvd_prevent_10 < 0.10)
+               !(time_chd < time_v3 & status_chd == 1),
+               !(time_stroke < time_v3 & status_stroke == 1),
+               cvd_prevent_10 < 0.10,
+               status_htn == as.numeric(htn))
       }
     )
 

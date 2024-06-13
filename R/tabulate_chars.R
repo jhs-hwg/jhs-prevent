@@ -25,8 +25,7 @@ tabulate_chars <- function(jhs_cleaned, labels) {
       "chol_ldl",
       "cvd_prevent_10",
       "cvd_prevent_30",
-      # "htn_v2",
-      "htn_v3",
+      "status_htn",
       "lvmi_height",
       "lvh_height"
     )
@@ -67,7 +66,6 @@ tabulate_chars <- function(jhs_cleaned, labels) {
                     "bmi" ~ 1,
                     "sbp" ~ 0,
                     "dbp" ~ 0,
-                    # "hba1c" ~ 1,
                     "chol_total" ~ 0,
                     "chol_hdl" ~ 0,
                     "chol_ldl" ~ 0,

@@ -12,7 +12,7 @@ library(future.callr)
 plan(callr)
 
 
-proposal_version <- 2
+proposal_version <- 3
 
 if(!dir.exists(glue("doc/proposal-v{proposal_version}"))){
   dir.create(glue("doc/proposal-v{proposal_version}"))
@@ -47,9 +47,15 @@ analysis_ctns_tar <- tar_map(
   tar_target(analysis_set, jhs_subset(jhs_imputed, subset = subset)),
   tar_target(tbl_prevent_dist, tabulate_prevent_dist(analysis_set)),
   tar_target(fit_htn, icen_fit(analysis_set)),
-  tar_target(fit_lvm,
+
+  tar_target(fit_lvm_htn,
              pattern = map(outcomes_lvm),
-             lm_fit(analysis_set, .outcome = outcomes_lvm)),
+             lm_fit(analysis_set, .outcome = outcomes_lvm, htn = TRUE)),
+
+  tar_target(fit_lvm_norm,
+             pattern = map(outcomes_lvm),
+             lm_fit(analysis_set, .outcome = outcomes_lvm, htn = FALSE)),
+
   tar_target(fit_lvh,
              pattern = map(outcomes_lvh),
              gee_fit(analysis_set, .outcome = outcomes_lvh))
@@ -74,16 +80,28 @@ tbl_fit_htn_tar <- tar_target(
   tabulate_fit_htn(fit_htn_cmbn, labels = labels)
 )
 
-fit_lvm_cmbn_tar <- tar_combine(
-  fit_lvm_cmbn,
-  analysis_ctns_tar$fit_lvm,
+fit_lvm_htn_cmbn_tar <- tar_combine(
+  fit_lvm_htn_cmbn,
+  analysis_ctns_tar$fit_lvm_htn,
   command = bind_rows(!!!.x, .id = 'group') %>%
     mutate(group = str_remove(group, "^fit_lvm_"))
 )
 
-tbl_fit_lvm_tar <- tar_target(
-  tbl_fit_lvm,
-  tabulate_fit_lvm(fit_lvm_cmbn, labels = labels)
+fit_lvm_norm_cmbn_tar <- tar_combine(
+  fit_lvm_norm_cmbn,
+  analysis_ctns_tar$fit_lvm_norm,
+  command = bind_rows(!!!.x, .id = 'group') %>%
+    mutate(group = str_remove(group, "^fit_lvm_"))
+)
+
+tbl_fit_lvm_htn_tar <- tar_target(
+  tbl_fit_lvm_htn,
+  tabulate_fit_lvm(fit_lvm_htn_cmbn, labels = labels)
+)
+
+tbl_fit_lvm_norm_tar <- tar_target(
+  tbl_fit_lvm_norm,
+  tabulate_fit_lvm(fit_lvm_norm_cmbn, labels = labels)
 )
 
 fit_lvh_cmbn_tar <- tar_combine(
@@ -132,8 +150,10 @@ targets <- list(
   tbl_prevent_dist_cmbn_tar,
   fit_htn_cmbn_tar,
   tbl_fit_htn_tar,
-  fit_lvm_cmbn_tar,
-  tbl_fit_lvm_tar,
+  fit_lvm_htn_cmbn_tar,
+  fit_lvm_norm_cmbn_tar,
+  tbl_fit_lvm_htn_tar,
+  tbl_fit_lvm_norm_tar,
   fit_lvh_cmbn_tar,
   tbl_fit_lvh_tar,
   proposal_tar,

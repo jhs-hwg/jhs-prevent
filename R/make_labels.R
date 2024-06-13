@@ -20,6 +20,7 @@ make_labels <- function(...) {
     htn_v1 = "Hypertension at visit 1",
     htn_v2 = "Hypertension at visit 2",
     htn_v3 = "Hypertension at visit 3",
+    status_htn = "Hypertension at visit 2 or 3",
     hba1c = "Glycated hemoglobin",
     diabetes = "Diabetes",
     chol_total = "Total cholesterol",

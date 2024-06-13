@@ -9,7 +9,7 @@
 #' @export
 #'
 
-# analysis_set <- tar_read(analysis_set_overall)
+# analysis_set <- tar_read(analysis_set_norm)
 
 icen_fit <- function(analysis_set) {
 
@@ -38,8 +38,8 @@ icen_fit <- function(analysis_set) {
             tibble(term = ref, Estimate = 0, `Exp(Est)` = 1),
             smry_catg) %>%
     rename(est = `Exp(Est)`) %>%
-    mutate(lwr = est - 1.96 * Std.Error,
-           upr = est + 1.96 * Std.Error) %>%
+    mutate(lwr = exp(Estimate - 1.96 * Std.Error),
+           upr = exp(Estimate + 1.96 * Std.Error)) %>%
     select(term, est, lwr, upr, p)
 
 }

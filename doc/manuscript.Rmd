@@ -70,7 +70,8 @@ withr::with_dir(
                         jhs_excluded, 
                         tbl_chars,
                         tbl_fit_htn,
-                        tbl_fit_lvm,
+                        tbl_fit_lvm_htn,
+                        tbl_fit_lvm_norm,
                         tbl_fit_lvh,
                         tbl_prevent_dist_cmbn))
   }
@@ -199,12 +200,12 @@ as_grouped_data(tbl_fit_htn, groups = 'term_group') %>%
 \newpage
 
 
-Table 4: Expected left ventricular mass (95% confidence interval) at visit 3 based on predicted 30-year cardiovascular disease risk at visit 1.
+Table 4A: Expected left ventricular mass (95% confidence interval) at visit 3 based on predicted 30-year cardiovascular disease risk at visit 1 for participants who *developed* hypertension between visit 1 and visit 3.
 
 
 ```{r}
 
-tbls_lvm <- tbl_fit_lvm %>% 
+tbls_lvm_htn <- tbl_fit_lvm_htn %>% 
   map(
     ~ as_grouped_data(.x, groups = 'term_group') %>% 
       .[-1, ] %>% 
@@ -226,14 +227,48 @@ tbls_lvm <- tbl_fit_lvm %>%
       width(width = 1.25) %>% 
       align(align = 'center', part = 'all') %>% 
       align(j = 1, align = 'left', part = 'all') %>% 
-      add_footer_lines("Results are presented for participants who did not have stroke or coronary heart disease event from visit 1 to visit 3 and had predicted 30-year cardiovascular disease risk <10% at visit 1.")
+      add_footer_lines("Results are presented for participants who did not have stroke or coronary heart disease event from visit 1 to visit 3, had incident hypertension by visit 3, and had predicted 10-year cardiovascular disease risk <10% at visit 1.")
   )
 
-tbls_lvm$lvmi_height.complete_case
+tbls_lvm_norm <- tbl_fit_lvm_norm %>% 
+  map(
+    ~ as_grouped_data(.x, groups = 'term_group') %>% 
+      .[-1, ] %>% 
+      as_flextable(hide_grouplabel = TRUE) %>% 
+      theme_box() %>% 
+      bg(i =~ !is.na(term_group), bg = 'grey90') %>% 
+      padding(i = ~ str_detect(term, "<|\\u2265"), 
+              j = 1, 
+              padding.left = 15,
+              part = 'body') %>% 
+      set_header_labels(term = "PREVENT 30-year CVD risk") %>% 
+      add_header_row(
+        values = c("PREVENT 30-year CVD risk", 
+                   "Overall", 
+                   "Blood pressure groups"),
+        colwidths = c(1,1,3)
+      ) %>% 
+      merge_v(part = 'header') %>% 
+      width(width = 1.25) %>% 
+      align(align = 'center', part = 'all') %>% 
+      align(j = 1, align = 'left', part = 'all') %>% 
+      add_footer_lines("Results are presented for participants who did not have stroke or coronary heart disease event from visit 1 to visit 3, did not have incident hypertension by visit 3, and had predicted 10-year cardiovascular disease risk <10% at visit 1.")
+  )
 
-
+tbls_lvm_htn$lvmi_height.complete_case
 
 ```
+
+\newpage
+
+Table 4B: Expected left ventricular mass (95% confidence interval) at visit 3 based on predicted 30-year cardiovascular disease risk at visit 1 for participants who *did not develop* hypertension between visit 1 and visit 3.
+
+```{r}
+
+tbls_lvm_norm$lvmi_height.complete_case
+
+```
+
 
 \newpage
 
@@ -263,7 +298,7 @@ tbls_lvh <- tbl_fit_lvh %>%
       width(width = 1.25) %>% 
       align(align = 'center', part = 'all') %>% 
       align(j = 1, align = 'left', part = 'all') %>% 
-      add_footer_lines("Results are presented for participants who did not have stroke or coronary heart disease event from visit 1 to visit 3 and had predicted 30-year cardiovascular disease risk <10% at visit 1.")
+      add_footer_lines("Results are presented for participants who did not have stroke or coronary heart disease event from visit 1 to visit 3 and had predicted 10-year cardiovascular disease risk <10% at visit 1.")
   )
 
 tbls_lvh$lvh_height.complete_case
@@ -290,14 +325,26 @@ tbl_exclusions %>%
 
 \newpage
 
-Table S2: Expected left ventricular mass (95% confidence interval) at visit 3 based on predicted 30-year cardiovascular disease risk at visit 1.
+Table S2A: Expected left ventricular mass (95% confidence interval) at visit 3 based on predicted 30-year cardiovascular disease risk at visit 1 for participants who *developed* hypertension between visit 1 and visit 3.
 
 ```{r}
 
-tbls_lvm$lvmi_height.imputed %>% 
+tbls_lvm_htn$lvmi_height.imputed %>% 
   add_footer_lines("Results are based on multiple imputation using chained equations to account for missing values of left ventricular mass index")
 
 ```
+
+\newpage
+
+Table S2B: Expected left ventricular mass (95% confidence interval) at visit 3 based on predicted 30-year cardiovascular disease risk at visit 1 for participants who *did not develop* hypertension between visit 1 and visit 3.
+
+```{r}
+
+tbls_lvm_norm$lvmi_height.imputed %>% 
+  add_footer_lines("Results are based on multiple imputation using chained equations to account for missing values of left ventricular mass index")
+
+```
+
 
 \newpage
 

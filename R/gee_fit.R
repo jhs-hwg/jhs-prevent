@@ -1,5 +1,5 @@
 
-# analysis_set <- tar_read(analysis_set_elevated)
+# analysis_set <- tar_read(analysis_set_overall)
 # .outcome = 'lvh_height'
 
 gee_fit <- function(analysis_set, .outcome) {
@@ -9,9 +9,11 @@ gee_fit <- function(analysis_set, .outcome) {
       ~ {
         .x$outcome <- as.numeric(.x[[.outcome]]=="Yes")
         filter(.x,
-               !(time_chd < time_v2 & status_chd == 1),
-               !(time_stroke < time_v2 & status_stroke == 1),
-               cvd_prevent_10 < 0.10)
+               !(time_chd < time_v3 & status_chd == 1),
+               !(time_stroke < time_v3 & status_stroke == 1),
+               cvd_prevent_10 < 0.10,
+               htn_v2 == "Yes" | htn_v3 == "Yes")
+
       }
     )
 
