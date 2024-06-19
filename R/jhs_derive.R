@@ -202,6 +202,7 @@ jhs_derive <- function(jhs_excluded) {
         cvd_prevent_30 >= .30 ~ "\u226530%",
         TRUE ~ NA_character_
       ),
+
       cvd_prevent_cat_30 = factor(cvd_prevent_cat_30,
                                   levels = c("<10%",
                                              "10% to <20%",

@@ -1,8 +1,10 @@
 source("packages.R")
 source("conflicts.R")
 
-# Switch from pooled cohort 10-year to PREVENT 10-year
-# MAKE BP CATEGORY A FACTOR
+# Drop LVH
+# Make table with only continuous CVD risk
+# consider pooling normal/elevated
+# consider pooling 20-30 and >= 30
 
 ## Load your R files
 lapply(list.files("./R", full.names = TRUE), source)
@@ -12,13 +14,13 @@ library(future.callr)
 plan(callr)
 
 
-proposal_version <- 3
+proposal_version <- 2
 
 if(!dir.exists(glue("doc/proposal-v{proposal_version}"))){
   dir.create(glue("doc/proposal-v{proposal_version}"))
 }
 
-manuscript_version <- 2
+manuscript_version <- 3
 
 if(!dir.exists(glue("doc/manuscript-v{manuscript_version}"))){
   dir.create(glue("doc/manuscript-v{manuscript_version}"))

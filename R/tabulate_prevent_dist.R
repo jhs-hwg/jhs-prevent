@@ -7,6 +7,10 @@
 #' @return
 #' @author bcjaeger
 #' @export
+#'
+
+# analysis_set <- tar_read(analysis_set_overall)
+
 tabulate_prevent_dist <- function(analysis_set) {
 
   counts <- analysis_set$Dataset_0 %>%
@@ -15,10 +19,11 @@ tabulate_prevent_dist <- function(analysis_set) {
     mutate(p = n / sum(n))
 
   smry <- analysis_set$Dataset_0 %>%
+    # group_by(bp_cat) %>%
     group_by(cvd_prevent_bnry_10, cvd_prevent_cat_30) %>%
     summarize(lvmi_height = mean(lvmi_height, na.rm = TRUE),
               lvh_height = mean(lvh_height == "Yes", na.rm = TRUE),
-              htn = mean(htn_v2 == 'Yes' | htn_v3 == "Yes", na.rm = TRUE))
+              htn = mean(status_htn, na.rm = TRUE))
 
   left_join(counts, smry)
 
